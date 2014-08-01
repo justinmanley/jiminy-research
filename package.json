@@ -1,0 +1,14 @@
+{
+  "name": "jiminy-research",
+  "version": "0.0.1",
+  "description": "Researching the effect of GPS usage on smartphone battery life.",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+  	"gx-begone":"0.1.1",
+    "json": "9.0.1"
+  },
+  "author": "Justin Manley",
+  "license": "ISC"
+}
