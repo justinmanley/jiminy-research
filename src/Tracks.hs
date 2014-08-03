@@ -1,14 +1,15 @@
 module Main where
 
-import Data.Maybe (maybeToList)
 import Control.Applicative ((<$>))
 import System.Environment (getArgs)
-import Control.Monad (guard)
 import Control.Monad.Trans.Maybe
-import Control.Monad.Trans.Class (lift)
-import Data.List (subsequences, isInfixOf, delete)
+import Data.List (isInfixOf)
+import Statistics.Regression (olsRegress)
+import Data.Vector.Unboxed (fromList)
 
+import Amount
 import BatteryUsage
+import Phone
 
 getSessionUsage :: MaybeT IO [SessionUsage]
 getSessionUsage = do
@@ -47,9 +48,18 @@ getTotalHours :: [Maybe [Int]] -> Maybe Int
 getTotalHours = foldr addMaybe (Just 0) . map getHours
 
 ---------------------------------------------------------
+-- model ------------------------------------------------
+---------------------------------------------------------
+
+--discharge :: SessionUsage -> Amount Int
+--discharge u = subtractAmount $ (start . batteryUsage $ u) (end . batteryUsage $ u) 
+
+--modelBatteryDischarge :: [SessionUsage] -> (Phone -> [Int])
+
+---------------------------------------------------------
 -- main -------------------------------------------------
 ---------------------------------------------------------
 main :: IO ()
 main = do
-	Just j <- runMaybeT ((getTotalHours . getDuration) <$> getSessionUsage)
+	Just j <- runMaybeT (getDuration <$> getSessionUsage)
 	print j

@@ -47,4 +47,4 @@ Literature
 
 [MathWorks: Battery](http://www.mathworks.com/help/physmod/sps/powersys/ref/battery.html)
 
-	* Understand Battery State-of-Charge (SOC)
+* Understand Battery State-of-Charge (SOC)

@@ -9,6 +9,8 @@ import Control.Applicative ((<$>), (<*>))
 import qualified Data.ByteString.Lazy.Char8 as ByteString
 import GHC.Generics
 
+import Amount
+
 decodeString :: FromJSON a => String -> Maybe a
 decodeString = decode . ByteString.pack
 
@@ -38,9 +40,9 @@ instance FromJSON SessionUsage where
 -- BatteryUsage --------------------------------------
 ------------------------------------------------------
 data BatteryUsage = BatteryUsage {
-	start :: Amount,
-	end :: Amount,
-	usage :: Amount
+	start :: Amount Int,
+	end :: Amount Int,
+	usage :: Amount Int
 } deriving (Show)
 
 instance FromJSON BatteryUsage where
@@ -56,8 +58,8 @@ instance FromJSON BatteryUsage where
 ------------------------------------------------------
 data DataUsage = DataUsage {
 	usageType :: String,
-	sent :: Amount,
-	received :: Amount
+	sent :: Amount Int, 
+	received :: Amount Int
 } deriving (Show)
 
 instance FromJSON DataUsage where
@@ -77,26 +79,3 @@ data Date = Date {
 } deriving (Show, Generic)
 
 instance FromJSON Date
-
-------------------------------------------------------
--- Amount --------------------------------------------
-------------------------------------------------------
-data Amount = Amount (Maybe Int) Unit deriving (Show)
-
-instance FromJSON Amount where
-    parseJSON (Object v) =
-        Amount <$>
-        (v .: "amount") <*>
-        (v .: "units")
-
-------------------------------------------------------
--- Unit ----------------------------------------------
-------------------------------------------------------
-data Unit = Percent | Bytes | Kilobytes | Megabytes deriving (Show)
-
-instance FromJSON Unit where
-	parseJSON (String s) = do
-		case s of
-			"KB" -> return Kilobytes
-			"MB" -> return Megabytes
-			"percent" -> return Percent
