@@ -1,31 +1,41 @@
 module DischargeModel where
 
-import Amount
+import Data.Maybe (fromJust)
+import Data.Vector.Unboxed (fromList, Vector(..))
+
 import Phone
 import BatteryUsage
+
+---------------------------------------------------------
+-- Duration ---------------------------------------------
+---------------------------------------------------------
+
+getDuration :: SessionUsage -> Int
+getDuration = fromJust . (fmap durationToSeconds) . duration 
+
+durationToSeconds :: [Int] -> Int
+durationToSeconds xs = foldr (+) 0 (zipWith (*) sixties $ reverse xs) where
+	sixties = iterate (*60) 1
+
+---------------------------------------------------------
+-- Discharge --------------------------------------------
+---------------------------------------------------------
+
+startStateOfCharge :: SessionUsage -> Int
+startStateOfCharge = fromJust . start . batteryUsage
+
+endStateOfCharge :: SessionUsage -> Int
+endStateOfCharge = fromJust . end . batteryUsage
+
+getDischarge :: SessionUsage -> Int
+getDischarge u = startStateOfCharge u - endStateOfCharge u
 
 ---------------------------------------------------------
 -- model ------------------------------------------------
 ---------------------------------------------------------
 
-
-subtractMaybeAmount :: Num a => Maybe (Amount a) -> Maybe (Amount a) -> Maybe (Amount a)
-subtractMaybeAmount Nothing _ = Nothing
-subtractMaybeAmount _ Nothing = Nothing
-subtractMaybeAmount (Just (Amount x s1)) (Just (Amount y s2))
-	| s1 == s2 = Just $ Amount (x - y) s1
-	| otherwise = Nothing
-
-startTime :: SessionUsage -> Maybe (Amount Int)
-startTime = start . batteryUsage
-
-endTime :: SessionUsage -> Maybe (Amount Int)
-endTime = end . batteryUsage
-
-getDischarge :: SessionUsage -> Maybe (Amount Int)
-getDischarge u = subtractMaybeAmount (startTime u) (endTime u)
-
---constructPredictors :: [SessionUsage] -> [Vector]
---constructPredictors xs = [fromList v | [getDuration x, getDischarge x] <- xs ] 
+constructPredictors :: [SessionUsage] -> [Vector Int]
+constructPredictors = map constructPredictor where
+	constructPredictor u = fromList [getDischarge u, getDuration u]
 
 --modelBatteryDischarge :: [SessionUsage] -> (Phone -> [Int])

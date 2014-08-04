@@ -8,8 +8,8 @@ import Data.Aeson ((.:), decode, eitherDecode, FromJSON(..), Value(..))
 import Control.Applicative ((<$>), (<*>))
 import qualified Data.ByteString.Lazy.Char8 as ByteString
 import GHC.Generics
+import Data.List (isInfixOf)
 
-import Amount
 
 decodeString :: FromJSON a => String -> Maybe a
 decodeString = decode . ByteString.pack
@@ -21,59 +21,65 @@ data SessionUsage = SessionUsage {
 	note :: String,
 	date :: Date,
 	appName :: String,
-	duration :: Maybe String,
+	duration :: Maybe [Int],
 	batteryUsage :: BatteryUsage,
 	dataUsage :: [DataUsage]
 } deriving (Show)
 
+-- | Note below that fmap is applied twice: once as fmap, and once as <$>.
+--   The first application of fmap gets parseDuration into the Parser monad.
+--   The second application of fmap gets parseDuration into the Maybe monad.
 instance FromJSON SessionUsage where
 	parseJSON (Object v) = 
 		SessionUsage <$> 
 		(v .: "note") <*>
 		(v .: "date") <*>
 		(v .: "app") <*>
-		(v .: "duration") <*>
+		(fmap parseDuration <$> v .: "duration") <*>
 		(v .: "battery-usage") <*>
 		(v .: "data-usage")
+
+split :: Eq a => a -> [a] -> [[a]]
+split _ [] = [[]]
+split delimiter ls 
+	| not $ [delimiter] `isInfixOf` ls = [ls]
+	| otherwise = first : split delimiter rest where
+		(first, d:rest) = break (== delimiter) ls
+
+parseDuration :: String -> [Int]
+parseDuration = map read . split ':'
 
 ------------------------------------------------------
 -- BatteryUsage --------------------------------------
 ------------------------------------------------------
 data BatteryUsage = BatteryUsage {
-	start :: Maybe (Amount Int),
-	end :: Maybe (Amount Int),
-	usage :: Maybe (Amount Int)
+	start :: Maybe Int,
+	end :: Maybe Int,
+	usage :: Maybe Int
 } deriving (Show)
 
 instance FromJSON BatteryUsage where
-	parseJSON (Object v) = do
-		start <- v .: "start"
-		end <- v .: "end"
-		units <- v .: "units"
-
-		usage <- (v .: "app") >>= (.: "amount")
-		usageUnits <- (v .: "app") >>= (.: "units")
-
-		return $ BatteryUsage 
-			(toMaybeAmount start units) 
-			(toMaybeAmount end units) 
-			(toMaybeAmount usage usageUnits)
+	parseJSON (Object v) = 
+		BatteryUsage <$>
+		(v .: "start") <*>
+		(v .: "end") <*>
+		((v .: "app") >>= (.: "amount"))
 
 ------------------------------------------------------
 -- DataUsage -----------------------------------------
 ------------------------------------------------------
 data DataUsage = DataUsage {
 	usageType :: String,
-	sent :: Amount Int, 
-	received :: Amount Int
+	sent :: Int, 
+	received :: Int
 } deriving (Show)
 
 instance FromJSON DataUsage where
 	parseJSON (Object v) = 
 		DataUsage <$>
 		(v .: "type") <*>
-		(v .: "sent") <*>
-		(v .: "received")
+		((v .: "sent") >>= (.: "amount")) <*>
+		((v .: "received") >>= (.: "amount"))
 
 ------------------------------------------------------
 -- Date ----------------------------------------------
