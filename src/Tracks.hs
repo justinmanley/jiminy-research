@@ -10,6 +10,7 @@ import Data.Vector.Unboxed (fromList)
 import Amount
 import BatteryUsage
 import Phone
+import DischargeModel
 
 getSessionUsage :: MaybeT IO [SessionUsage]
 getSessionUsage = do
@@ -30,10 +31,13 @@ split delimiter ls
 ---------------------------------------------------------
 -- Handle duration --------------------------------------
 ---------------------------------------------------------
-parseDuration :: String -> [Int]
-parseDuration = map read . split ':'
+parseDuration :: String -> [Amount Int]
+parseDuration s = map tupleToAmount $ zip (map read . split ':' $ s) [Hours, Minutes, Seconds]
 
-getDuration :: [SessionUsage] -> [Maybe [Int]]
+tupleToAmount :: (a, Unit) -> Amount a
+tupleToAmount (x, s1) = Amount x s1 
+
+getDuration :: [SessionUsage] -> [Maybe [Amount Int]]
 getDuration = map (fmap parseDuration . duration)
 
 getHours :: Maybe [Int] -> Maybe Int
@@ -47,19 +51,16 @@ addMaybe (Just a) b = fmap (+ a) b
 getTotalHours :: [Maybe [Int]] -> Maybe Int
 getTotalHours = foldr addMaybe (Just 0) . map getHours
 
----------------------------------------------------------
--- model ------------------------------------------------
----------------------------------------------------------
-
---discharge :: SessionUsage -> Amount Int
---discharge u = subtractAmount $ (start . batteryUsage $ u) (end . batteryUsage $ u) 
-
---modelBatteryDischarge :: [SessionUsage] -> (Phone -> [Int])
+durationToSeconds :: [Int] -> Int
+durationToSeconds xs = foldr (+) 0 (zipWith (*) sixties $ reverse xs) where
+	sixties = iterate (*60) 1 
 
 ---------------------------------------------------------
 -- main -------------------------------------------------
 ---------------------------------------------------------
 main :: IO ()
 main = do
-	Just j <- runMaybeT (getDuration <$> getSessionUsage)
-	print j
+	Just duration <- runMaybeT (getDuration <$> getSessionUsage)
+	Just discharge <- runMaybeT ((map getDischarge) <$> getSessionUsage)
+	print duration
+	print discharge

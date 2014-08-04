@@ -8,7 +8,7 @@ import Data.Aeson ((.:), decode, eitherDecode, FromJSON(..), Value(..))
 ------------------------------------------------------
 -- Amount --------------------------------------------
 ------------------------------------------------------
-data Amount a = Amount (Maybe a) Unit deriving (Show)
+data Amount a = Amount a Unit deriving (Show)
 
 instance (FromJSON a) => FromJSON (Amount a) where
     parseJSON (Object v) =
@@ -16,10 +16,21 @@ instance (FromJSON a) => FromJSON (Amount a) where
         (v .: "amount") <*>
         (v .: "units")
 
+toMaybeAmount :: Maybe a -> Unit -> Maybe (Amount a)
+toMaybeAmount Nothing _ = Nothing
+toMaybeAmount (Just x) u = Just $ Amount x u
+
 ------------------------------------------------------
 -- Unit ----------------------------------------------
 ------------------------------------------------------
-data Unit = Percent | Bytes | Kilobytes | Megabytes | MilliAmpereHour deriving (Show, Eq)
+data Unit = Percent 
+			| Bytes 
+			| Kilobytes 
+			| Megabytes 
+			| Hours
+			| Minutes
+			| Seconds
+			| MilliAmpereHours deriving (Show, Eq)
 
 instance FromJSON Unit where
 	parseJSON (String s) = do

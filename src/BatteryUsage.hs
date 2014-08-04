@@ -40,9 +40,9 @@ instance FromJSON SessionUsage where
 -- BatteryUsage --------------------------------------
 ------------------------------------------------------
 data BatteryUsage = BatteryUsage {
-	start :: Amount Int,
-	end :: Amount Int,
-	usage :: Amount Int
+	start :: Maybe (Amount Int),
+	end :: Maybe (Amount Int),
+	usage :: Maybe (Amount Int)
 } deriving (Show)
 
 instance FromJSON BatteryUsage where
@@ -50,8 +50,14 @@ instance FromJSON BatteryUsage where
 		start <- v .: "start"
 		end <- v .: "end"
 		units <- v .: "units"
-		usage <- v .: "app"
-		return $ BatteryUsage (Amount start units) (Amount end units) usage
+
+		usage <- (v .: "app") >>= (.: "amount")
+		usageUnits <- (v .: "app") >>= (.: "units")
+
+		return $ BatteryUsage 
+			(toMaybeAmount start units) 
+			(toMaybeAmount end units) 
+			(toMaybeAmount usage usageUnits)
 
 ------------------------------------------------------
 -- DataUsage -----------------------------------------
