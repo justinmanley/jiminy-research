@@ -1,0 +1,19 @@
+[
+	{
+		"name": "HTC One M8",
+		"battery": {
+			"capacity": { "amount": 2600, "units": "mAh" },
+			"talk-time": { 
+				"amount": 20, 
+				"units": "hours", 
+				"description": "Up to 20 hours for 3G" },
+			"standby-time": { 
+				"amount": 496, 
+				"units": "hours",
+				"description": "Up to 496 hours for 3G"
+			},
+			"url": "http://www.htc.com/us/smartphones/htc-one-m8/",
+			"accessed": "2014-8-2"
+		}
+	}
+]

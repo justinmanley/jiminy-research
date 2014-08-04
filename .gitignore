@@ -4,4 +4,7 @@ dist
 
 node_modules
 
-data
+data/App.json
+data/BatteryUsage.json
+data/Phone.json
+data/tracks
